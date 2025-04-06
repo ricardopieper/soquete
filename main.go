@@ -306,6 +306,17 @@ func runLoop(reader io.Reader, conn net.Conn, closeSignal chan int) {
 			})
 			break
 		} else if frame.Opcode == ConnectionClose {
+			if frame.PayloadSize == 0 {
+				sendFrame(conn, WebsocketFrame{
+					Fin:         true,
+					Opcode:      ConnectionClose,
+					Payload:     []byte{},
+					PayloadSize: 0,
+					ClosingCode: 1000,
+					Rsv:         0,
+				})
+				break
+			}
 			if frame.PayloadSize == 1 {
 				sendFrame(conn, WebsocketFrame{
 					Fin:         true,
@@ -633,10 +644,8 @@ func main() {
 	println(cases)
 	domain := "127.0.0.1"
 	port := 9001
-	for i := 217; i < 517; i++ {
-		if i == 0 {
-			continue
-		}
+	for i := 1; i < cases; i++ {
+
 		fmt.Printf("\n############### \nRUNNING TEST %v\n###############\n\n", i)
 		closeSignal := make(chan int)
 		endpoint := "/runCase?case=" + strconv.Itoa(i) + "&agent=echo"
